@@ -1,6 +1,7 @@
 services:
   zabbix-web:
     image: zabbix/zabbix-web-nginx-mysql:latest
+    container_name: zabbix-web
     environment:
       - SERVICE_FQDN_ZABBIX_8080
       - ZBX_SERVER_HOST=zabbix-server
@@ -17,6 +18,7 @@ services:
 
   zabbix-server:
     image: zabbix/zabbix-server-mysql:latest
+    container_name: zabbix-server
     environment:
       - DB_SERVER_HOST=mariadb
       - 'MYSQL_USER=${SERVICE_USER_MYSQL}'
@@ -33,6 +35,7 @@ services:
 
   mariadb:
     image: mariadb:10.5
+    container_name: mariadb
     environment:
       - 'MYSQL_ROOT_PASSWORD=${SERVICE_PASSWORD_MYSQLROOT}'
       - 'MYSQL_USER=${SERVICE_USER_MYSQL}'
