@@ -1,0 +1,59 @@
+services:
+  zabbix-web:
+    image: zabbix/zabbix-web-nginx-mysql:latest
+    environment:
+      - SERVICE_FQDN_ZABBIX_8080
+      - ZBX_SERVER_HOST=zabbix-server
+      - 'MYSQL_USER=${SERVICE_USER_MYSQL}'
+      - 'MYSQL_PASSWORD=${SERVICE_PASSWORD_MYSQL}'
+      - 'MYSQL_DATABASE=${MYSQL_DATABASE}'
+    depends_on:
+      - zabbix-server
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    networks:
+      - zabbix_net
+
+  zabbix-server:
+    image: zabbix/zabbix-server-mysql:latest
+    environment:
+      - DB_SERVER_HOST=mariadb
+      - 'MYSQL_USER=${SERVICE_USER_MYSQL}'
+      - 'MYSQL_PASSWORD=${SERVICE_PASSWORD_MYSQL}'
+      - 'MYSQL_DATABASE=${MYSQL_DATABASE}'
+    depends_on:
+      - mariadb
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./zabbix_etc:/etc/zabbix/
+    restart: unless-stopped
+    networks:
+      - zabbix_net
+
+  mariadb:
+    image: mariadb:10.5
+    environment:
+      - 'MYSQL_ROOT_PASSWORD=${SERVICE_PASSWORD_MYSQLROOT}'
+      - 'MYSQL_USER=${SERVICE_USER_MYSQL}'
+      - 'MYSQL_PASSWORD=${SERVICE_PASSWORD_MYSQL}'
+      - 'MYSQL_DATABASE=${MYSQL_DATABASE:-zabbix}'
+    healthcheck:
+      test:
+        - CMD
+        - healthcheck.sh
+        - '--connect'
+        - '--innodb_initialized'
+      interval: 5s
+      timeout: 20s
+      retries: 10
+    volumes:
+      - ./zabbix_data:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    networks:
+      - zabbix_net
+
+networks:
+  zabbix_net:
+    driver: bridge
